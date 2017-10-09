@@ -6,9 +6,16 @@ import (
     "sort"
 )
 
-type SerieStatItem struct {
-	label string
-	nb int
+
+type TimestampSerie struct {
+	T 	int 
+	Nb 	int
+}
+
+
+type LabelSerie struct {
+	Label 	string 
+	Nb 		int
 }
 
 func monthFrench(x int) string {
@@ -29,28 +36,53 @@ func monthFrench(x int) string {
 }
 
 
-func RangeYear(start int, end int) map[string]int {
-	var m map[string]int
-	m = make(map[string]int)
+func MonthToTimestamp(y int, m int) int {
+	then := time.Date(y, time.Month(m), 1, 0, 0, 0, 0, time.UTC)
+	return int(then.Unix())	
+}
+
+func YearToTimestamp(y int) int {
+	return MonthToTimestamp(y, 1)
+}
+
+func TimestampToYear(t int) string {
+	date := time.Unix(int64(t), 0)
+	return strconv.Itoa(date.Year())
+}
+
+func TimestampToMounth(t int) string {
+	date := time.Unix(int64(t), 0)
+	year := date.Year()
+	month := int(date.Month())
+	frenchMonth := monthFrench(month)
+	return strconv.Itoa(year) + "-" + frenchMonth
+}
+
+
+func RangeYear(start int, end int) map[int]int {
+	var m map[int]int
+	m = make(map[int]int)
 
 	for i := start; i <= end; i++ {
-		m[strconv.Itoa(i)] = 0
+		timestamp := YearToTimestamp(i)
+		m[timestamp] = 0
 	}
 
 	return m
 }
 
 
-func RangeLastMonth(startY int, startM int, nbMonth int) map[string]int {
-	var final map[string]int
-	final = make(map[string]int)
+func RangeLastMonth(startY int, startM int, nbMonth int) map[int]int {
+	var final map[int]int
+	final = make(map[int]int)
 	compteur := 0
 
 	for y := startY; y > 0; y-- {
 		for m := startM; m > 0; m-- {
-			final[strconv.Itoa(y) + "-" + monthFrench(m)] = 0
+			timestamp := MonthToTimestamp(y, m)
+			final[timestamp] = 0			
 			compteur += 1
-			if(compteur == 12) {
+			if(compteur == nbMonth) {
 				return final
 			}
 		}
@@ -60,54 +92,72 @@ func RangeLastMonth(startY int, startM int, nbMonth int) map[string]int {
 	return final
 }
 
-
-func StatSujetsByYear(sujets []Sujet) []SerieStatItem {
-	current := time.Now()
-	stats := RangeYear(2004, current.Year())
-
-	for _,v := range sujets {
-		year := strconv.Itoa(v.Initialised_at.Year())
-		if _, ok:= stats[year]; ok {
-			stats[year] += 1
-		}		
-	}
-
-	return ConvertMapToSerie(stats, true)
-}
-
-
-func StatSujetsByLastMouth(sujets []Sujet) []SerieStatItem {
-	current := time.Now()
-	stats := RangeLastMonth(current.Year(), int(current.Month()), 12)
-
-	for _,v := range sujets {
-		year := v.Initialised_at.Year()
-		month := int(v.Initialised_at.Month())
-		key := strconv.Itoa(year) + "-" + monthFrench(month)
-		if _, ok:= stats[key]; ok {
-			stats[key] += 1
-		}		
-	}
-
-	return ConvertMapToSerie(stats, false)
-}
-
-
-func ConvertMapToSerie(m map[string]int, sortByKey bool) []SerieStatItem {
-	var conversion []SerieStatItem
+func ConvertTimeMapToArray(m map[int]int) []TimestampSerie {
+	var timesSerie []TimestampSerie
 
 	for k,v := range m {
-		var t SerieStatItem
-		t.label = k
-		t.nb = v
-		conversion = append(conversion, t)
+		var t TimestampSerie
+		t.T = k
+		t.Nb = v
+		timesSerie = append(timesSerie, t)
 	}
 
-	if(sortByKey){
-		sort.Slice(conversion, func(i, j int) bool {
-		    return conversion[i].label > conversion[j].label
-		})		
-	}
+	sort.Slice(timesSerie, func(i, j int) bool {
+	    return timesSerie[i].T > timesSerie[j].T
+	})	
 
-	return conversion
+	return timesSerie
 }
+
+
+func StatSujetsByYear(sujets []Sujet) []LabelSerie {
+	current := time.Now()
+	statsDict := RangeYear(2004, current.Year())
+	var timesSerie []TimestampSerie
+	var labelSerie []LabelSerie
+
+	for _,v := range sujets {
+		key := YearToTimestamp(v.Initialised_at.Year())
+		if _, ok:= statsDict[key]; ok {
+			statsDict[key] += 1
+		}		
+	}
+
+	timesSerie = ConvertTimeMapToArray(statsDict)
+	for _,v := range timesSerie {
+		var t LabelSerie
+		t.Label = TimestampToYear(v.T)
+		t.Nb = v.Nb
+		labelSerie = append(labelSerie, t)
+	}
+
+	return labelSerie
+}
+
+
+func StatSujetsByLastMouth(sujets []Sujet) []LabelSerie {
+	current := time.Now()
+	statsDict := RangeLastMonth(current.Year(), int(current.Month()), 12)
+	var timesSerie []TimestampSerie
+	var labelSerie []LabelSerie
+
+	for _,v := range sujets {
+		y := v.Initialised_at.Year()
+		m := int(v.Initialised_at.Month())
+		key := MonthToTimestamp(y, m)
+		if _, ok:= statsDict[key]; ok {
+			statsDict[key] += 1
+		}		
+	}
+
+	timesSerie = ConvertTimeMapToArray(statsDict)
+	for _,v := range timesSerie {
+		var t LabelSerie
+		t.Label = TimestampToMounth(v.T)
+		t.Nb = v.Nb
+		labelSerie = append(labelSerie, t)
+	}
+
+	return labelSerie
+}
+

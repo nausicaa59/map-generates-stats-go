@@ -98,3 +98,4 @@ func (i *Impl) GetSujetByAuteur(id int) []Sujet {
 	i.DB.Where("auteur = ?", id).Find(&a)
 	return a
 }
+

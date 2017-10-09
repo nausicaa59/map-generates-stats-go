@@ -3,71 +3,81 @@ package main
 import (
   "fmt"
   "time"
-  /*"encoding/json"
-  "io/ioutil"*/
 )
 
-type Fragment struct {
-    Start int
-    End   int
+type PseudoProfils struct {
+    Infos                Auteur
+    AnalyseTextuel      []WordOccurence
+    SujetByYear         []LabelSerie
+    SujetByLastMouth    []LabelSerie
+    Sujets              []Sujet
+    Similaires          []Similaire
 }
 
+type Similaire struct {
+    Pseudo      string
+    ID          uint
+    Nb_messages uint
+    Pourc       float64
+    Img_lien    string
+}
 
 func main() {
+    start := time.Now() 
+    
     bdd := Impl{}
     bdd.InitDB()
     bdd.InitSchema()
     pseudos := bdd.GetAllPseudo()
-    pseudos = pseudos[40500:40510]
-    worker(pseudos, bdd)
-}
-
-
-func worker(pseudos []string, bdd Impl) {
-    nb := len(pseudos)
-    for i := 0; i < nb; i++ {
-        start := time.Now()
-        infos := bdd.GetAuteurByPseudo(pseudos[i])
-        sujets := bdd.GetSujetByAuteur(int(infos.ID))
-        sujetsByYear := StatSujetsByYear(sujets)
-        sujetsByLastMounth := StatSujetsByLastMouth(sujets)
-        analyseTextuelSujets(sujets)
-        end := time.Now()
-        fmt.Println(end.Sub(start), infos.Pseudo, len(sujets), len(sujetsByYear), sujetsByLastMounth)
-    }
-}
-
-
-/*
-CalcDistPseudo(pseudos[i], pseudos)
-nb := len(pseudos)
-for i := 0; i < nb; i++ {
-    start := time.Now()
-    CalcDistPseudo(pseudos[i], pseudos)
+    GenerateProfils(pseudos, bdd)
+    
     end := time.Now()
     fmt.Println(end.Sub(start))
 }
 
-func fragmenter(t []string, nb int) []Fragment {
-    var final []Fragment
-    compl := len(t) % nb
-    tranche := (len(t) - compl) / nb
 
-    for i := 1; i <= nb; i++ {
-        tempo := Fragment{}
-        tempo.Start = tranche * (i - 1)
-        tempo.End = tranche * i
-        final = append(final, tempo)
+func GenerateProfils(pseudos []string, bdd Impl) {
+    nb := len(pseudos)
+    excludeWord := getExcludeWordFile("input/excludeWord.csv")
+
+    for i := 0; i < nb; i++ {
+        /*if(FileExist(pseudos[i])) {
+            fmt.Println(pseudos[i], "existe déja !")
+            continue
+        }*/
+
+        start := time.Now()        
+        p := PseudoProfils{}        
+        p.Infos             = bdd.GetAuteurByPseudo(pseudos[i])
+        p.Sujets            = bdd.GetSujetByAuteur(int(p.Infos.ID))
+        p.SujetByYear       = StatSujetsByYear(p.Sujets)
+        p.SujetByLastMouth  = StatSujetsByLastMouth(p.Sujets)
+        p.AnalyseTextuel    = analyseTextuelSujets(p.Sujets, excludeWord)
+        p.Similaires        = getSimilaires(pseudos[i], pseudos, bdd)
+        WriteOutPut(p)
+        end := time.Now()
+        fmt.Println(end.Sub(start), p.Infos.Pseudo)
+
+        if(i > 20) {
+            break
+        }
+    }
+}
+
+func getSimilaires(target string, pseudos []string, bdd Impl) []Similaire {
+    var s []Similaire
+    pFounds := CalcDistPseudo(target, pseudos)
+
+    for _,v := range pFounds {
+        tempo := Similaire{}
+        infos := bdd.GetAuteurByPseudo(v.S)
+        tempo.Pseudo        = infos.Pseudo
+        tempo.ID            = infos.ID
+        tempo.Nb_messages   = infos.Nb_messages
+        tempo.Img_lien      = infos.Img_lien
+        tempo.Pourc         = v.Dist * 100
+        s = append(s, tempo)
     }
 
-    final[nb-1].End += compl
-    return final
+    return s
 }
-fmt.Println(end.Sub(start))
-
-end := time.Now()
-err = ioutil.WriteFile(a.Pseudo + ".json", j, 0644)
-if(err != nil) {
-  panic("Erreur lors de l'écriture")
-}
-*/
