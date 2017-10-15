@@ -28,8 +28,8 @@ func main() {
     bdd := Impl{}
     bdd.InitDB(conf)
     bdd.InitSchema()
-    /*pseudos := bdd.GetAllPseudo()
-    GenerateProfils(pseudos, bdd)*/
+    pseudos := bdd.GetAllPseudo()
+    GenerateProfils(pseudos, bdd)
     end := time.Now()
     fmt.Println(end.Sub(start))
 }
