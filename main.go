@@ -52,9 +52,9 @@ func GenerateProfils(pseudos []string, bdd Impl) {
         end := time.Now()
         fmt.Println(end.Sub(start), p.Infos.Pseudo)
 
-        if(i > 20) {
+        /*if(i > 20) {
             break
-        }
+        }*/
     }
 }
 
