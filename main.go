@@ -23,14 +23,13 @@ type Similaire struct {
 }
 
 func main() {
+    conf := LoadConf()
     start := time.Now() 
-    
     bdd := Impl{}
-    bdd.InitDB()
+    bdd.InitDB(conf)
     bdd.InitSchema()
-    pseudos := bdd.GetAllPseudo()
-    GenerateProfils(pseudos, bdd)
-    
+    /*pseudos := bdd.GetAllPseudo()
+    GenerateProfils(pseudos, bdd)*/
     end := time.Now()
     fmt.Println(end.Sub(start))
 }
@@ -41,11 +40,6 @@ func GenerateProfils(pseudos []string, bdd Impl) {
     excludeWord := getExcludeWordFile("input/excludeWord.csv")
 
     for i := 0; i < nb; i++ {
-        /*if(FileExist(pseudos[i])) {
-            fmt.Println(pseudos[i], "existe déja !")
-            continue
-        }*/
-
         start := time.Now()        
         p := PseudoProfils{}        
         p.Infos             = bdd.GetAuteurByPseudo(pseudos[i])

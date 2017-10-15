@@ -43,10 +43,12 @@ type Sujet struct {
 }
 
 
-func (i *Impl) InitDB() {
+func (i *Impl) InitDB(conf Conf) {
 	var err error
-	i.DB, err = gorm.Open("mysql", "root:root@/scrapping?charset=utf8&parseTime=True&loc=Local")
+	c := conf.DbUsername + ":" + conf.DbPassword + "@/" + conf.DbName + "?charset=utf8&parseTime=True&loc=Local"
+	i.DB, err = gorm.Open("mysql", c)
 	if err != nil {
+		fmt.Println(err)
 		panic("Got error when connect database, the error is '%v'")
 	}
 }
