@@ -21,6 +21,7 @@ type Similaire struct {
     Nb_messages uint
     Pourc       float64
     Img_lien    string
+    Banni       uint
 }
 
 
@@ -90,10 +91,6 @@ func GenerateSimilaires(pseudos []string, bdd Impl) {
         
         end := time.Now()
         fmt.Println(pourc, end.Sub(start), pseudos[i])
-
-        if(i > 10) {
-            os.Exit(1)
-        }
     }
 }
 
@@ -108,6 +105,7 @@ func getSimilaires(target string, pseudos []string, bdd Impl) []Similaire {
         tempo.ID            = infos.ID
         tempo.Nb_messages   = infos.Nb_messages
         tempo.Img_lien      = infos.Img_lien
+        tempo.Banni         = infos.Banni
         tempo.Pourc         = v.Dist * 100
         s = append(s, tempo)
     }
