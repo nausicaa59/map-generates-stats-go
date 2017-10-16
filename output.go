@@ -8,24 +8,14 @@ import (
 )
 
 
-func FileExist(p string) bool {
-    path := GeneratePathFile(p, 3)
-    if _, err := os.Stat(path); os.IsNotExist(err) {
-        return false
-    }
-
-    return true
-}
-
-
-func WriteOutPut(p PseudoProfils) bool {
+func WriteOutPutProfils(p PseudoProfils) bool {
     output, err := json.Marshal(p)
     if(err != nil) {
         fmt.Println("erreur lors de la sérialisation de ", p.Infos.Pseudo, ":", err)
         return false
     }
 
-    path := GeneratePathFile(p.Infos.Pseudo, 3)
+    path := GeneratePathFile("profils/", p.Infos.Pseudo, 3)
     err = ioutil.WriteFile(path, output, 0644)
     if(err != nil) {
         fmt.Println("erreur lors de l'écriture de ", p.Infos.Pseudo, ":", err)
@@ -35,9 +25,26 @@ func WriteOutPut(p PseudoProfils) bool {
     return true
 }
 
+func WriteOutPutSimilaire(pseudo string, s []Similaire) bool {
+    output, err := json.Marshal(s)
+    if(err != nil) {
+        fmt.Println("erreur lors de la sérialisation de ", pseudo, ":", err)
+        return false
+    }
 
-func GeneratePathFile(pseudo string, nbLvl int) string {
-    path := "output/"
+    path := GeneratePathFile("similaires/", pseudo, 3)
+    err = ioutil.WriteFile(path, output, 0644)
+    if(err != nil) {
+        fmt.Println("erreur lors de l'écriture de ", pseudo, ":", err)
+        return false
+    }
+
+    return true
+}
+
+
+func GeneratePathFile(subFolder string, pseudo string, nbLvl int) string {
+    path := "output/" + subFolder
 
     for i := 0; i < nbLvl; i++ {
         path += string(pseudo[i]) + "/"
