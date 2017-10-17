@@ -5,6 +5,8 @@ import (
     _ "github.com/jinzhu/gorm/dialects/mysql"
     "time"
     "fmt"
+    "strconv"
+    "sort"
 )
 
 
@@ -101,3 +103,63 @@ func (i *Impl) GetSujetByAuteur(id int) []Sujet {
 	return a
 }
 
+
+func (i *Impl) CountAuteur() int {
+	var count int
+	i.DB.Table("auteurs").Count(&count)
+	return count
+}
+
+func (i *Impl) CountSujets() int {
+	var count int
+	i.DB.Table("sujets").Count(&count)
+	return count
+}
+
+func (i *Impl) CountNbReponseSujets() int {
+	type Result struct {
+	    Total int
+	}
+
+	var results []Result
+	i.DB.Table("sujets").Select("sum(nb_reponses) as total").Scan(&results)
+
+	return results[0].Total
+}
+
+func (i *Impl) CountNbReponseByYear() []LabelSerie {
+	var results []LabelSerie
+	i.DB.Table("sujets").Select("Year(initialised_at) as label, sum(nb_reponses) as nb").Group("label").Scan(&results)
+	
+	sort.Slice(results, func(i, j int) bool {
+		yearI, _ := strconv.Atoi(results[i].Label)
+		yearJ, _ := strconv.Atoi(results[j].Label)
+	    return yearI > yearJ
+	})
+
+	return results
+}
+
+func (i *Impl) CountNbReponseByLastMouth() []LabelSerie {
+	var results []LabelSerie
+	i.DB.Table("sujets").Select("DATE_FORMAT(initialised_at, '%Y-%m') as label, sum(nb_reponses) as nb").Group("label").Scan(&results)
+	return results[len(results)-12:]
+}
+
+func (i *Impl) TopSujets() []Sujet {
+	var s []Sujet
+	i.DB.Order("nb_reponses desc").Limit(30).Find(&s)
+	return s	
+}
+
+func (i *Impl) TopAuteurs() []Auteur {
+	var a []Auteur
+	i.DB.Order("nb_messages desc").Limit(30).Find(&a)
+	return a	
+}
+
+func (i *Impl) GetAllUrlSujets() []string {
+	var url []string
+	i.DB.Model(&Sujet{}).Pluck("url", &url)
+	return url
+}

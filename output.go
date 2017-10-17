@@ -7,6 +7,23 @@ import (
   "os"
 )
 
+func WriteOutPutStatGeneral(s StatGenerale) bool {
+    output, err := json.Marshal(s)
+    if(err != nil) {
+        fmt.Println("erreur lors de la sérialisation des stats generale", err)
+        return false
+    }
+
+    err = ioutil.WriteFile("output/statgeneral.json", output, 0644)
+    if(err != nil) {
+        fmt.Println("erreur lors de l'écriture des stats generale", err)
+        return false
+    }
+
+    return true    
+}
+
+
 
 func WriteOutPutProfils(p PseudoProfils) bool {
     output, err := json.Marshal(p)
@@ -55,6 +72,15 @@ func GeneratePathFile(subFolder string, pseudo string, nbLvl int) string {
     }
 
     return path + pseudo + ".json"
+}
+
+func FileExiste(subFolder string, pseudo string, nbLvl int) bool {
+    path := GeneratePathFile(subFolder, pseudo, nbLvl);
+    if _, err := os.Stat(path); os.IsNotExist(err) {
+        return false
+    }
+
+    return true
 }
 
 

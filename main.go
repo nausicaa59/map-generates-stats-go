@@ -24,6 +24,18 @@ type Similaire struct {
     Banni       uint
 }
 
+type StatGenerale struct {
+    NbPseudo            uint
+    NbSujet             uint
+    NbReponse           uint
+    NbRepSujet          float64
+    ReponseByYear       []LabelSerie
+    ReponseByLastMouth  []LabelSerie
+    Sujets              []Sujet
+    Auteurs             []Auteur
+    AnalyseTextuel      []WordOccurence
+}
+
 
 
 
@@ -48,6 +60,9 @@ func main() {
         case "-similaires":
             pseudos := bdd.GetAllPseudo()
             GenerateSimilaires(pseudos, bdd)
+        case "-statsgeneral":
+            //GenerateStatGeneral(bdd)
+            GenerateAllWords(bdd)
         default:
             fmt.Println("Aucun mode valide choisi, fin du programme")
             os.Exit(0)
@@ -57,6 +72,22 @@ func main() {
     fmt.Println(argsWithProg, len(argsWithProg), end.Sub(start))
 }
 
+func GenerateAllWords(bdd Impl) {
+    fmt.Println("test")
+}
+
+func GenerateStatGeneral(bdd Impl) {
+    var stats StatGenerale
+    stats.NbPseudo  = uint(bdd.CountAuteur())
+    stats.NbSujet   = uint(bdd.CountSujets())
+    stats.NbReponse = uint(bdd.CountNbReponseSujets())
+    stats.NbRepSujet = float64(float64(stats.NbReponse) / float64(stats.NbSujet))
+    stats.ReponseByYear = bdd.CountNbReponseByYear()  
+    stats.ReponseByLastMouth = bdd.CountNbReponseByLastMouth() 
+    stats.Sujets = bdd.TopSujets()
+    stats.Auteurs = bdd.TopAuteurs() 
+    WriteOutPutStatGeneral(stats)
+}
 
 func GenerateProfils(pseudos []string, bdd Impl) {
     nb := len(pseudos)
@@ -83,6 +114,10 @@ func GenerateProfils(pseudos []string, bdd Impl) {
 func GenerateSimilaires(pseudos []string, bdd Impl) {
     nb := len(pseudos)
     for i := 0; i < nb; i++ {
+        if FileExiste("similaires/", pseudos[i], 3) {
+            continue
+        }
+
         start := time.Now() 
         pourc := (float64(i)/float64(nb))*100
         
