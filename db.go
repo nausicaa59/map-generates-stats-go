@@ -158,8 +158,8 @@ func (i *Impl) TopAuteurs() []Auteur {
 	return a	
 }
 
-func (i *Impl) GetAllUrlSujets() []string {
+func (i *Impl) GetAllUrlSujets(offset int, lim int) []string {
 	var url []string
-	i.DB.Model(&Sujet{}).Pluck("url", &url)
+	i.DB.Model(&Sujet{}).Offset(offset).Limit(lim).Pluck("url", &url)
 	return url
 }

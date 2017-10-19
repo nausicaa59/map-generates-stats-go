@@ -4,6 +4,8 @@ import (
   "fmt"
   "time"
   "os"
+  "sort"
+  "bufio"
 )
 
 type PseudoProfils struct {
@@ -61,8 +63,7 @@ func main() {
             pseudos := bdd.GetAllPseudo()
             GenerateSimilaires(pseudos, bdd)
         case "-statsgeneral":
-            //GenerateStatGeneral(bdd)
-            GenerateAllWords(bdd)
+            GenerateStatGeneral(bdd)            
         default:
             fmt.Println("Aucun mode valide choisi, fin du programme")
             os.Exit(0)
@@ -72,9 +73,6 @@ func main() {
     fmt.Println(argsWithProg, len(argsWithProg), end.Sub(start))
 }
 
-func GenerateAllWords(bdd Impl) {
-    fmt.Println("test")
-}
 
 func GenerateStatGeneral(bdd Impl) {
     var stats StatGenerale
@@ -83,9 +81,10 @@ func GenerateStatGeneral(bdd Impl) {
     stats.NbReponse = uint(bdd.CountNbReponseSujets())
     stats.NbRepSujet = float64(float64(stats.NbReponse) / float64(stats.NbSujet))
     stats.ReponseByYear = bdd.CountNbReponseByYear()  
-    stats.ReponseByLastMouth = bdd.CountNbReponseByLastMouth() 
+    stats.ReponseByLastMouth = bdd.CountNbReponseByLastMouth()
     stats.Sujets = bdd.TopSujets()
     stats.Auteurs = bdd.TopAuteurs() 
+    stats.AnalyseTextuel = GenerateAllWords(bdd) 
     WriteOutPutStatGeneral(stats)
 }
 
@@ -146,4 +145,42 @@ func getSimilaires(target string, pseudos []string, bdd Impl) []Similaire {
     }
 
     return s
+}
+
+func GenerateAllWords(bdd Impl) []WordOccurence{
+    var words map[string]int
+    words = make(map[string]int)
+    excludeWord := getExcludeWordFile("input/excludeWord.csv")
+    compteur := 0
+
+    file, err := os.Open("input/sujets.csv")
+    if err != nil {
+        panic("erreur")
+    }
+    defer file.Close()
+
+    scanner := bufio.NewScanner(file)
+    for scanner.Scan() {
+        var t []string
+        t = append(t, scanner.Text())
+        GenrateMapFromUrl(words, t)
+        compteur += 1
+        
+        if compteur % 1000000 == 0 {
+            fmt.Println(compteur)
+        }
+    }
+
+    if err := scanner.Err(); err != nil {
+        panic("erreur")
+    }
+
+
+    final := ConvertMapWordToSlice(words)
+    final = cleanArrayWords(final, excludeWord)
+    sort.Slice(final, func(i, j int) bool {
+        return final[i].Nb > final[j].Nb
+    })
+
+    return final[0:100]
 }

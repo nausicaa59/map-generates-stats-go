@@ -65,6 +65,25 @@ func CalcDistPseudo(c string, pseudos []string) []DistString {
 	return dists[0:60]
 }
 
+func isFlood(s string) bool {
+	if strings.Contains(s,"www") {
+		return true
+	}
+
+	if strings.Contains(s,"ww") {
+		return true
+	}
+
+	if strings.Contains(s,"wmwmw") {
+		return true
+	}
+
+	if len(s) > 15 {
+		return true
+	}
+	return false
+}
+
 
 func CleanUrls(urls []string) []string {
 	var finals []string
@@ -73,7 +92,7 @@ func CleanUrls(urls []string) []string {
 	for _, v := range urls {
 		found := r.FindStringSubmatch(v)
 		if found != nil {
-			finals = append(finals, found[1])
+			finals = append(finals, found[1])			
 		}
 	}
 
@@ -145,4 +164,47 @@ func analyseTextuelSujets(sujets []Sujet, exclude []string) []WordOccurence {
 
 	final := AnalyseUrls(urls)
 	return cleanArrayWords(final, exclude)
+}
+
+func fusionListeWordOccurence(a []WordOccurence, b []WordOccurence) []WordOccurence {
+	var final []WordOccurence
+
+	for _,v := range a {
+		final = append(final, v)
+	}
+
+	for _,b := range b {
+		present := false
+		for i,f := range final {
+			if f.Word == b.Word {
+				present = true
+				final[i].Nb += b.Nb
+			}
+		}
+
+		if !present {
+			final = append(final, b)
+		} 
+	}
+
+	return final
+}
+
+
+func GenrateMapFromUrl(words map[string]int, urls []string) {
+	urlsCleans := CleanUrls(urls)
+
+	for _,v := range urlsCleans {
+		for _, w := range strings.Split(v, "-") {
+			if isFlood(w) {
+				continue
+			}
+
+			if _, ok:= words[w]; ok {
+				words[w] += 1
+			} else {
+				words[w] = 1
+			}
+		}
+	}
 }
